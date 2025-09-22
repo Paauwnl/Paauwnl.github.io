@@ -36,3 +36,8 @@ ul li a {
 ul li a:hover {
   background-color: #393535;
 }
+img {
+  display: block;
+  margin: auto;
+  width: 50%;
+}
