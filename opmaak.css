@@ -41,3 +41,7 @@ img {
   margin: auto;
   width: 15%;
 }
+
+img {
+  border-radius: 8px;
+}
