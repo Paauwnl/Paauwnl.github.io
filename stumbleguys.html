@@ -1,95 +1,148 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Mini Brawl Stars</title>
-  <style>
-    body { margin:0; background:#f0f0f0; }
-    canvas { display:block; margin:auto; background:#aeeaff; border:3px solid #000; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Cowboy Shooter 3D</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #87ceeb; }
+        canvas { display: block; }
+        #score { position: absolute; top: 10px; left: 10px; color: white; font-size: 24px; font-family: sans-serif; }
+    </style>
 </head>
 <body>
-<canvas id="game" width="600" height="400"></canvas>
-
+<div id="score">Score: 0</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r150/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/controls/PointerLockControls.js"></script>
 <script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+    // Basis setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb); // luchtblauw
 
-let keys = {};
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
 
-// speler
-let player = {x:300,y:200,w:30,h:30,speed:3, bullets: []};
+    const renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-// vijanden
-let enemies = [
-  {x:100,y:50,w:30,h:30, color:'red'},
-  {x:500,y:50,w:30,h:30, color:'red'}
-];
+    // Licht
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(5,10,7);
+    scene.add(light);
 
-// invoer
-document.addEventListener("keydown", e => { keys[e.code]=true; });
-document.addEventListener("keyup", e => { keys[e.code]=false; });
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
 
-// schieten
-function shoot() {
-  player.bullets.push({x:player.x+player.w/2-5, y:player.y-10, w:10, h:10, vy:-6});
-}
+    // Vloer (woestijn)
+    const floorGeometry = new THREE.PlaneGeometry(100, 100);
+    const floorMaterial = new THREE.MeshPhongMaterial({color:0xDEB887});
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI/2;
+    scene.add(floor);
 
-// botsing helper
-function collide(a,b){
-  return a.x<a.x+b.w && a.x+a.w>b.x && a.y<a.y+b.h && a.y+a.h>b.y;
-}
+    // Cowboy speler (kubus)
+    const playerGeometry = new THREE.BoxGeometry(1,2,1);
+    const playerMaterial = new THREE.MeshPhongMaterial({color:0x8B4513});
+    const player = new THREE.Mesh(playerGeometry, playerMaterial);
+    player.position.y = 1;
+    scene.add(player);
 
-// game loop
-function loop(){
-  // bewegen speler
-  if(keys["ArrowLeft"]) player.x -= player.speed;
-  if(keys["ArrowRight"]) player.x += player.speed;
-  if(keys["ArrowUp"]) player.y -= player.speed;
-  if(keys["ArrowDown"]) player.y += player.speed;
-  if(keys["Space"] && player.bullets.length<5) shoot();
+    // Controls
+    const controls = new THREE.PointerLockControls(camera, document.body);
+    document.body.addEventListener('click', () => controls.lock());
+    camera.position.y = 2;
+    controls.getObject().position.set(0,0,5);
+    scene.add(controls.getObject());
 
-  // update bullets
-  player.bullets.forEach((b,i)=>{
-    b.y += b.vy;
-    // check botsing met vijanden
-    enemies.forEach((e,j)=>{
-      if(collide(b,e)){
-        enemies.splice(j,1);
-        player.bullets.splice(i,1);
-      }
+    // Bewegingslogica
+    const move = {forward:false, backward:false, left:false, right:false};
+    document.addEventListener('keydown', (e) => {
+        if(e.code==='KeyW') move.forward=true;
+        if(e.code==='KeyS') move.backward=true;
+        if(e.code==='KeyA') move.left=true;
+        if(e.code==='KeyD') move.right=true;
     });
-    // buiten canvas
-    if(b.y<0) player.bullets.splice(i,1);
-  });
+    document.addEventListener('keyup', (e) => {
+        if(e.code==='KeyW') move.forward=false;
+        if(e.code==='KeyS') move.backward=false;
+        if(e.code==='KeyA') move.left=false;
+        if(e.code==='KeyD') move.right=false;
+    });
 
-  // tekenen
-  ctx.clearRect(0,0,600,400);
+    const speed = 0.1;
 
-  // speler
-  ctx.fillStyle='blue';
-  ctx.fillRect(player.x,player.y,player.w,player.h);
+    // Doelen
+    const targets = [];
+    const targetGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 16);
+    const targetMaterial = new THREE.MeshPhongMaterial({color:0xff0000});
 
-  // vijanden
-  enemies.forEach(e=>{
-    ctx.fillStyle = e.color;
-    ctx.fillRect(e.x,e.y,e.w,e.h);
-  });
+    function spawnTarget() {
+        const target = new THREE.Mesh(targetGeometry, targetMaterial);
+        target.position.set((Math.random()-0.5)*40, 0.5, (Math.random()-0.5)*40);
+        scene.add(target);
+        targets.push(target);
+    }
 
-  // bullets
-  player.bullets.forEach(b=>{
-    ctx.fillStyle='yellow';
-    ctx.fillRect(b.x,b.y,b.w,b.h);
-  });
+    for(let i=0;i<5;i++) spawnTarget();
 
-  // HUD
-  ctx.fillStyle='black';
-  ctx.font='16px Arial';
-  ctx.fillText('Enemies: '+enemies.length, 10,20);
+    // Schiet logica
+    let score = 0;
+    const bullets = [];
+    document.addEventListener('click', shoot);
 
-  requestAnimationFrame(loop);
-}
-loop();
+    function shoot() {
+        const bulletGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+        const bulletMaterial = new THREE.MeshBasicMaterial({color:0xffff00});
+        const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+
+        bullet.position.copy(camera.position);
+        const vector = new THREE.Vector3(0,0,-1);
+        vector.applyQuaternion(camera.quaternion);
+        bullet.userData.velocity = vector.multiplyScalar(1);
+        scene.add(bullet);
+        bullets.push(bullet);
+    }
+
+    // Animatie loop
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // Beweging
+        const direction = new THREE.Vector3();
+        if(move.forward) direction.z -= speed;
+        if(move.backward) direction.z += speed;
+        if(move.left) direction.x -= speed;
+        if(move.right) direction.x += speed;
+
+        controls.moveRight(direction.x);
+        controls.moveForward(direction.z);
+
+        // Bullets bewegen
+        bullets.forEach((b, i) => {
+            b.position.add(b.userData.velocity);
+
+            // Bots raken
+            targets.forEach((t, j) => {
+                if(b.position.distanceTo(t.position) < 0.5){
+                    scene.remove(t);
+                    targets.splice(j,1);
+                    scene.remove(b);
+                    bullets.splice(i,1);
+                    score++;
+                    document.getElementById('score').innerText = 'Score: ' + score;
+                }
+            });
+        });
+
+        renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth/window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
 </script>
 </body>
 </html>
