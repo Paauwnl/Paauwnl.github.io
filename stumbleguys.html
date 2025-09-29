@@ -1,90 +1,95 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mini Stumble Guys — Werkend</title>
-<style>
-html,body{height:100%;margin:0;background:#e9f5ff;font-family:Arial,Helvetica,sans-serif}
-.wrap{display:flex;flex-direction:column;align-items:center;padding:12px}
-canvas{background:linear-gradient(#cde7ff,#9fd8ff);border:4px solid #3aa0ff;border-radius:10px;display:block}
-h1{margin:8px 0 6px;color:#064f8c}
-p{margin:4px 0 12px}
-.hint{font-size:14px;color:#073b5a}
-</style>
+  <meta charset="utf-8">
+  <title>Mini Brawl Stars</title>
+  <style>
+    body { margin:0; background:#f0f0f0; }
+    canvas { display:block; margin:auto; background:#aeeaff; border:3px solid #000; }
+  </style>
 </head>
 <body>
-<div class="wrap">
-<h1>Mini Stumble Guys (werkend)</h1>
-<p class="hint">← → om te bewegen, Spatie om te springen. Druk R om te resetten.</p>
-<canvas id="game" width="900" height="420"></canvas>
-</div>
-
+<canvas id="game" width="600" height="400"></canvas>
 
 <script>
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const W = canvas.width, H = canvas.height;
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-
-// input
 let keys = {};
-window.addEventListener('keydown', e => {
-// voorkom dat pijl-toetsen en spatie de pagina laten scrollen
-if(['ArrowLeft','ArrowRight','Space','ArrowUp','KeyW','KeyR'].includes(e.code)) e.preventDefault();
-keys[e.code] = true;
-});
-window.addEventListener('keyup', e => { keys[e.code] = false; });
-
-
-function rand(min,max){return Math.random()*(max-min)+min}
-
 
 // speler
-const player = { x:50, y:H-120, w:34, h:48, vx:0, vy:0, speed:2.8, jump:-10, onGround:false, color:'#ff6b6b' };
+let player = {x:300,y:200,w:30,h:30,speed:3, bullets: []};
 
+// vijanden
+let enemies = [
+  {x:100,y:50,w:30,h:30, color:'red'},
+  {x:500,y:50,w:30,h:30, color:'red'}
+];
 
-let platforms = [], obstacles = [], finishX = 1200, cameraX = 0, state = 'playing';
+// invoer
+document.addEventListener("keydown", e => { keys[e.code]=true; });
+document.addEventListener("keyup", e => { keys[e.code]=false; });
 
-
-function reset(){
-player.x = 50; player.y = H-120; player.vx = 0; player.vy = 0; player.onGround = false;
-platforms = [];
-obstacles = [];
-cameraX = 0;
-state = 'playing';
-
-
-// grote grond
-platforms.push({x:-1000, y:H-30, w:4000, h:30});
-
-
-// serie platforms en af en toe obstakels
-let x = 150;
-for(let i=0;i<12;i++){
-const w = Math.floor(rand(80,160));
-const y = H - Math.floor(rand(80,200));
-platforms.push({x:x, y:y, w:w, h:12});
-if(Math.random() < 0.5){
-obstacles.push({x: x + Math.floor(w*0.5), y: y - 20, r: 18, angle: 0, speed: rand(0.05,0.12)});
-}
-x += w + Math.floor(rand(40,160));
-}
-finishX = x + 120;
+// schieten
+function shoot() {
+  player.bullets.push({x:player.x+player.w/2-5, y:player.y-10, w:10, h:10, vy:-6});
 }
 
+// botsing helper
+function collide(a,b){
+  return a.x<a.x+b.w && a.x+a.w>b.x && a.y<a.y+b.h && a.y+a.h>b.y;
+}
 
-reset();
+// game loop
+function loop(){
+  // bewegen speler
+  if(keys["ArrowLeft"]) player.x -= player.speed;
+  if(keys["ArrowRight"]) player.x += player.speed;
+  if(keys["ArrowUp"]) player.y -= player.speed;
+  if(keys["ArrowDown"]) player.y += player.speed;
+  if(keys["Space"] && player.bullets.length<5) shoot();
 
+  // update bullets
+  player.bullets.forEach((b,i)=>{
+    b.y += b.vy;
+    // check botsing met vijanden
+    enemies.forEach((e,j)=>{
+      if(collide(b,e)){
+        enemies.splice(j,1);
+        player.bullets.splice(i,1);
+      }
+    });
+    // buiten canvas
+    if(b.y<0) player.bullets.splice(i,1);
+  });
 
-function update(){
-if(state !== 'playing') return;
+  // tekenen
+  ctx.clearRect(0,0,600,400);
 
+  // speler
+  ctx.fillStyle='blue';
+  ctx.fillRect(player.x,player.y,player.w,player.h);
 
-// beweging
-player.vx = 0;
-if(keys['ArrowLeft']) player.vx = -player.speed;
-if(keys['ArrowRight']) player.vx = player.speed;
+  // vijanden
+  enemies.forEach(e=>{
+    ctx.fillStyle = e.color;
+    ctx.fillRect(e.x,e.y,e.w,e.h);
+  });
 
+  // bullets
+  player.bullets.forEach(b=>{
+    ctx.fillStyle='yellow';
+    ctx.fillRect(b.x,b.y,b.w,b.h);
+  });
 
+  // HUD
+  ctx.fillStyle='black';
+  ctx.font='16px Arial';
+  ctx.fillText('Enemies: '+enemies.length, 10,20);
+
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
 </html>
