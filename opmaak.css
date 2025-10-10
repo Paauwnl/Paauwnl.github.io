@@ -1,10 +1,10 @@
 body {
-  background-color: rgb(122, 156, 207); 
+  background-color: rgb(122, 156, 207);  /*dit is je hoofdkleur van je pagina*/
 }
 
 h1 {
   color: rgb(62, 67, 77);
-  text-align: center;
+  text-align: center; /* dit is je tekstkleur bij h1*/
 }
 
 
@@ -18,7 +18,7 @@ ul {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background-color: #000000;
+  background-color: #000000; /*dit is je kleur van je ul lijsten*/
 }
 
 ul li {
@@ -30,18 +30,18 @@ ul li a {
   color: rgb(122, 156, 207);
   text-align: center;
   padding: 14px 16px;
-  text-decoration: none;
+  text-decoration: none; /* dit is je kleur van de ul lijst*/
 }
 
 ul li a:hover {
-  background-color: #393535;
+  background-color: #393535; /* deze kleur krijg je als je over je ul gaat met je muis*/
 }
 img {
   display: block;
   margin: auto;
-  width: 15%;
+  width: 15%; /* dit is om je plaatje in het midden te zetten*/
 }
 
 img {
-  border-radius: 12px;
+  border-radius: 12px; /*dit is om je randjes van je plaatje rond te krijgen*/
 }
