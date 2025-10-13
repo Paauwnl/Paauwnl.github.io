@@ -39,7 +39,7 @@ ul li a:hover {
 img {
   display: block; /* dit is om je plaatje in het midden te zetten*/
   margin: auto;
-  width: 20%; /* dit is om je plaatje groter of kleiner te krijgen*/
+  width: 30%; /* dit is om je plaatje groter of kleiner te krijgen*/
 }
 
 img {
